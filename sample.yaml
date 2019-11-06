@@ -1,32 +1,44 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: webapp
+  name: opsmx-restapp
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: opsmx-restapp
   template:
     metadata:
       labels:
-        app: webapp
+        app: opsmx-restapp
     spec:
       containers:
-        - image: 'gcr.io/opsmx-project/samplewebapp:latest'
-          name: webapp-pod
+        - image: 'docker.io/opsmx11/restapp:simple-1.0'
+          imagePullPolicy: Always
+          name: restapp
           ports:
             - containerPort: 8080
               name: http
               protocol: TCP
-      imagePullSecrets:
-        - name: eswsecr
+            - containerPort: 9090
+              name: prometheus
+              protocol: TCP
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: webapp-services
+  name: opsmx-rest-service
 spec:
   ports:
-    - port: 8080
+    - name: canary
+      port: 8080
       protocol: TCP
+      targetPort: 8080
+    - name: reports
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
   selector:
-    app: webapp
-  type: ClusterIP
+    app: opsmx-restapp
+  type: LoadBalancer
+  
